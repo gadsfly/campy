@@ -1,0 +1,54 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+videoFolder: "G:/videos/6cam/test_quality21_2048_1536_60fps_h265_300s_500buffer_JR/"
+videoFilename: "0.mp4"
+frameRate: 60
+recTimeInSec: 300
+
+# Camera parameters
+numCams: 6
+cameraSelection: [1,2,3,4,5,6]
+cameraNames: ["Camera1","Camera2","Camera3", "Camera4","Camera5","Camera6"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: "bayer_bggr8" #"bayer_bggr8" #"rgb24" 
+pixelFormatOutput: "rgb0"
+frameWidth:  2048 #2688 #2560 #2304 #2048 #1792 #1536 #3072 #3200 #1536 #1152 #3184 #2304 #1280 #Max = 3208
+frameHeight: 1536 #1536 #1792 #1792 #1536 #1280 #1024 #2048 #2176 #1408 #1024 #2160 #2048 #1024 #Max = 2200
+offsetX: 128 #72 #400 #128
+offsetY: 368 #64 #100 #368
+
+
+# Flir settings
+bufferSize: 500
+cameraExposureTimeInUs: 3582 #11638
+cameraGain: 10.4
+disableGamma: False #True
+cameraDebug: True
+ADCBits: "8"
+printWriteQueue: 100
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# Compression parameters
+gpuID: [0,0,0,0,0,0]                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+preset: "fast"                        # default is "fast"
+quality: 21 #5 #30  #21                      # 0-55
+ffmpegLogLevel: "warning"               # "quiet", "warning", "info"
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: 0 #10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"
+
