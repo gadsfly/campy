@@ -20,8 +20,8 @@ def OpenWriter(cam_params, queue):
             print("Made directory {}.".format(folder_name))
 
         # Flip blue and red for flir camera input
-        # if cam_params["pixelFormatInput"] == "bayer_bggr8" and cam_params["cameraMake"] == "flir":
-        # 	cam_params["pixelFormatInput"] == "bayer_rggb8"
+        if cam_params["pixelFormatInput"] == "bayer_bggr8" and cam_params["cameraMake"] == "flir":
+            cam_params["pixelFormatInput"] == "bayer_rggb8"
 
         # Load encoding parameters from cam_params
         pix_fmt_out = cam_params["pixelFormatOutput"]
@@ -60,23 +60,23 @@ def OpenWriter(cam_params, queue):
         else:
             # Nvidia GPU (NVENC) encoder optimized parameters
             print("Opened: {} using GPU {} to compress the stream.".format(full_file_name, cam_params["gpuID"]))
-            # if cam_params["gpuMake"] == "nvidia":
-            #     if preset == "None":
-            #         preset = "fast"
-            #     gpu_params = ["-r:v", frameRate, # important to play nice with vsync "0"
-            #                 "-preset", preset, # set to "fast", "llhp", or "llhq" for h264 or hevc
-            #                 "-qp", quality,
-            #                 "-bf:v", "0",
-            #                 "-vsync", "0",
-            #                 "-2pass", "0",
-            #                 "-gpu", gpuID,
-            #                 ]
-            #     if cam_params["codec"] == "h264":
-            #         codec = "h264_nvenc"
-            #     elif cam_params["codec"] == "h265":
-            #         codec = "hevc_nvenc"
+            if cam_params["gpuMake"] == "nvidia" and (cam_params["rateControl"] == "0" or cam_params["rateControl"] == "2" or cam_params["rateControl"] == "16"):
+                if preset == "None":
+                    preset = "fast"
+                gpu_params = ["-r:v", frameRate, # important to play nice with vsync "0"
+                            "-preset", preset, # set to "fast", "llhp", or "llhq" for h264 or hevc
+                            "-qp", quality,
+                            "-bf:v", "0",
+                            "-vsync", "0",
+                            "-2pass", "0",
+                            "-gpu", gpuID,
+                            ]
+                if cam_params["codec"] == "h264":
+                    codec = "h264_nvenc"
+                elif cam_params["codec"] == "h265":
+                    codec = "hevc_nvenc"
             
-            if cam_params["gpuMake"] == "nvidia":
+            if cam_params["gpuMake"] == "nvidia" and (cam_params["rateControl"] == "1" or cam_params["rateControl"] == "32"):
                 if preset == "None":
                     preset = "fast"
                 gpu_params = ["-preset", preset, # set to "fast", "llhp", or "llhq" for h264 or hevc
@@ -84,15 +84,16 @@ def OpenWriter(cam_params, queue):
                             # "-qp", quality,
                             # "-bf:v", "0",
                             # "-vsync", "0",
-                            # '-2pass', '1',    # sets two pass encoding to true, slightly slower but gives a much more consistent compression
-                            # '-rc-lookahead', '1024', #important for temporal-aq and 2-pass encoding. Allows for a larger number of frames to look at changes over time and where to assign complexity (complexity roughly equates to video size)
-                            # '-temporal-aq', '1', #can either use temporal-aq or spatial-aq not both. Temporal is better since the frame as a whole changes very little over time. Temporal also uses cuda and 3D cores on gpu
-                            # '-surfaces', '64', #greatly affects temporal-aq can never get this setting perfect with rc-lookahead but ffmpeg adjusts it automatically so it doesn't matter
-                            '-b:v', '60000000' , #the average bitrate, this is what controls are video size
-                            '-maxrate', '100000000' , #the max bitrate, this controls the upper bounds of our video size for a section of frames
-                            '-minrate:v', '50000000', #the min bitrate, this controls the lower bounds of our video size for a section of frames
-                            '-bufsize', '48M', #The buffer is inportant for stabalizing video write and read spead
-                            # '-threads', '16', # we don't need many since we are using gpu encoding, however we need one to handle the stream to the gpu and one or two to handle the -rc-lookahead
+                            '-rc', cam_params["rateControl"], # variable bit rate - 32 for high quality, 1 for normal
+                            '-2pass', '1',    # sets two pass encoding to true, slightly slower but gives a much more consistent compression
+                            '-rc-lookahead', '1536', #'1664', # #important for temporal-aq and 2-pass encoding. Allows for a larger number of frames to look at changes over time and where to assign complexity (complexity roughly equates to video size)
+                            '-temporal-aq', '1', #can either use temporal-aq or spatial-aq not both. Temporal is better since the frame as a whole changes very little over time. Temporal also uses cuda and 3D cores on gpu
+                            '-surfaces', '64', #greatly affects temporal-aq can never get this setting perfect with rc-lookahead but ffmpeg adjusts it automatically so it doesn't matter
+                            '-b:v', cam_params["avgBitRate"] , #the average bitrate, this is what controls are video size
+                            '-maxrate', cam_params["maxBitRate"] , #the max bitrate, this controls the upper bounds of our video size for a section of frames
+                            '-minrate:v', '500000', #the min bitrate, this controls the lower bounds of our video size for a section of frames
+                            '-bufsize', cam_params["gpuBuffer"], #The buffer is important for stabalizing video write and read spead
+                            '-threads', '16', # we don't need many since we are using gpu encoding, however we need one to handle the stream to the gpu and one or two to handle the -rc-lookahead
                             # '-pix_fmt', 'yuv420p', #specifies our pixel format. Nvidia doesn't allow for greyscale encoding so we have to encode the video as three colors
                             "-gpu", gpuID,
                             ]

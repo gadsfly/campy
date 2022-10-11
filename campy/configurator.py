@@ -42,17 +42,21 @@ def DefaultParams():
 
     # Compression default parameters
     params["ffmpegLogLevel"] = "quiet"
-    params["ffmpegPath"] = "None" # "/home/usr/Documents/ffmpeg/ffmpeg"
-    params["pixelFormatInput"] = "rgb24" # "bayer_bggr8" "rgb24"
+    params["ffmpegPath"] = "None"           # "/home/usr/Documents/ffmpeg/ffmpeg"
+    params["pixelFormatInput"] = "rgb24"    # "bayer_bggr8" "rgb24"
     params["ADCBits"] = "8"
     params["pixelFormatOutput"] = "rgb0"
     params["gpuID"] = -1
     params["gpuMake"] = "nvidia"
     params["codec"] = "h264"  
-    params["quality"] = 21
+    params["quality"] = 21                  # Only used when using constant bit rate 
     params["preset"] = "None"
     params["packetDelay"] = 3400
     params["convertBuffer"] = False
+    params["maxBitRate"] = '900000000'      # Only when using variable bit rate
+    params["avgBitRate"] = '4000000'        # Only when using variable bit rate
+    params["rateControl"] = '0'             # 1 for vbr (variable bit rate), 32 for vbr_hq (vbr high quality mode); 2 for contant bitrate, 16 for constant bitrate high quality, 0 for constatnt qp mode
+    params["gpuBuffer"] = '64M'             # This buffer is important for stabalizing video write and read spead
 
     # Display parameters
     params["chunkLengthInSec"] = 5
@@ -466,6 +470,32 @@ def ParseClargs(parser):
 		dest="MaxIncompleteImages",
 		type=int,
 		help="Automatically shut down recording if number of dropped frames reach this number. Set to -1 to diable. Only applicable for FLIR cameras",
+	)
+	parser.add_argument(
+		"--maxBitRate",
+		dest="maxBitRate",
+		type=ast.literal_eval,
+		help="Maximum encoding bitrate for FFMPEG. Default is 900Mbps - 1Gbps is not allowed. Have to be specified in bits per second",
+	)
+
+	parser.add_argument(
+		"--avgBitRate",
+		dest="avgBitRate",
+		type=ast.literal_eval,
+		help="Average encoding bitrate for FFMPEG. This controls how big the output file wiil be. Default is 4Mbps. Have to be specified in bits per second",
+	)
+
+	parser.add_argument(
+		"--rateControl",
+		dest="rateControl",
+		type=ast.literal_eval,
+		help="Specifies the type of rate control performed - constant bitrate, variable bitrate or constant qp. Please use the command 'ffmpeg -h encoder=nvenc_h264' to check all available bitrate modes. Default '0'.",
+	)
+	parser.add_argument(
+		"--gpuBuffer",
+		dest="gpuBuffer",
+		type=ast.literal_eval,
+		help="GPU Buffer. Available in variable bitrate mode",
 	)
 
 	return parser.parse_args()

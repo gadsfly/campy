@@ -4,8 +4,8 @@
 # Video parameters
 videoFolder: "G:/videos/1cam_3/timetest2/"
 videoFilename: "otfdb11.mp4"
-frameRate: 200
-recTimeInSec:  300 #1800 #3600 #1800 #7200
+frameRate: 80 #200
+recTimeInSec:  120 #1800 #3600 #1800 #7200
 
 # Camera parameters
 numCams: 1
@@ -23,7 +23,7 @@ offsetY: 368 #368
 
 # Flir settings
 # cameraTrigger: "None" # "Line3" #
-bufferSize: 500 #100 #1000 #271 - From Auto setting
+bufferSize: 1000 #100 #1000 #271 - From Auto setting
 cameraExposureTimeInUs: 3582
 cameraGain: 10.4
 disableGamma: False
