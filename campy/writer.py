@@ -21,7 +21,7 @@ def OpenWriter(cam_params, queue):
 
         # Flip blue and red for flir camera input
         if cam_params["pixelFormatInput"] == "bayer_bggr8" and cam_params["cameraMake"] == "flir":
-            cam_params["pixelFormatInput"] == "bayer_rggb8"
+            cam_params["pixelFormatInput"] == "bayer_rggb8" #"bayer_gbrg8" #"bayer_grbg8" #"bayer_rggb8"
 
         # Load encoding parameters from cam_params
         pix_fmt_out = cam_params["pixelFormatOutput"]
@@ -79,23 +79,25 @@ def OpenWriter(cam_params, queue):
             if cam_params["gpuMake"] == "nvidia" and (cam_params["rateControl"] == "1" or cam_params["rateControl"] == "32"):
                 if preset == "None":
                     preset = "fast"
-                gpu_params = ["-preset", preset, # set to "fast", "llhp", or "llhq" for h264 or hevc
+                gpu_params = ["-filter:v", "colorchannelmixer=0:0:1:0:0:1:0:0:1:0:0", # used to explicitly rearrange the channels before recording  
+                            "-preset", preset, # set to "fast", "llhp", or "llhq" for h264 or hevc
                             # "-r:v", "10", #frameRate, # important to play nice with vsync "0"
                             # "-qp", quality,
                             # "-bf:v", "0",
                             # "-vsync", "0",
                             '-rc', cam_params["rateControl"], # variable bit rate - 32 for high quality, 1 for normal
                             '-2pass', '1',    # sets two pass encoding to true, slightly slower but gives a much more consistent compression
-                            '-rc-lookahead', '1536', #'1664', # #important for temporal-aq and 2-pass encoding. Allows for a larger number of frames to look at changes over time and where to assign complexity (complexity roughly equates to video size)
+                            '-rc-lookahead', '1536', #'3072', #'1664', # #important for temporal-aq and 2-pass encoding. Allows for a larger number of frames to look at changes over time and where to assign complexity (complexity roughly equates to video size)
                             '-temporal-aq', '1', #can either use temporal-aq or spatial-aq not both. Temporal is better since the frame as a whole changes very little over time. Temporal also uses cuda and 3D cores on gpu
                             '-surfaces', '64', #greatly affects temporal-aq can never get this setting perfect with rc-lookahead but ffmpeg adjusts it automatically so it doesn't matter
                             '-b:v', cam_params["avgBitRate"] , #the average bitrate, this is what controls are video size
                             '-maxrate', cam_params["maxBitRate"] , #the max bitrate, this controls the upper bounds of our video size for a section of frames
-                            '-minrate:v', '500000', #the min bitrate, this controls the lower bounds of our video size for a section of frames
+                            '-minrate:v', '5000000', #the min bitrate, this controls the lower bounds of our video size for a section of frames
                             '-bufsize', cam_params["gpuBuffer"], #The buffer is important for stabalizing video write and read spead
                             '-threads', '16', # we don't need many since we are using gpu encoding, however we need one to handle the stream to the gpu and one or two to handle the -rc-lookahead
                             # '-pix_fmt', 'yuv420p', #specifies our pixel format. Nvidia doesn't allow for greyscale encoding so we have to encode the video as three colors
                             "-gpu", gpuID,
+                            
                             ]
                 if cam_params["codec"] == "h264":
                     codec = "h264_nvenc"
@@ -114,8 +116,8 @@ def OpenWriter(cam_params, queue):
                             "-bf:v", "0",
                             "-hwaccel", "auto",
                             "-hwaccel_device", gpuID,]
-                if pix_fmt_out == "rgb0" or pix_fmt_out == "bgr0":
-                    pix_fmt_out = "yuv420p"
+                # if pix_fmt_out == "rgb0" or pix_fmt_out == "bgr0":
+                #     pix_fmt_out = "yuv420p"
                 if cam_params["codec"] == "h264":
                     codec = "h264_amf"
                 elif cam_params["codec"] == "h265":
@@ -129,8 +131,8 @@ def OpenWriter(cam_params, queue):
                             "-bf:v", "0",
                             "-preset", preset,
                             "-q", str(int(quality)+1),]
-                if pix_fmt_out == "rgb0" or pix_fmt_out == "bgr0":
-                    pix_fmt_out = "nv12"
+                # if pix_fmt_out == "rgb0" or pix_fmt_out == "bgr0":
+                #     pix_fmt_out = "nv12"
                 if cam_params["codec"] == "h264":
                     codec = "h264_qsv"
                 elif cam_params["codec"] == "h265":

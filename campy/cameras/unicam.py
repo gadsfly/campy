@@ -176,7 +176,7 @@ def GrabFrames(cam_params, writeQueue, dispQueue, stopReadQueue, stopWriteQueue)
             # Append numpy array to writeQueue for writer to append to file
             # img = grabResult
             img = cam.GetImageArray(grabResult)
-            # print(img.dtype)
+            # print(img.shape)
             writeQueue.append(img)
 
             # print("Here3")
