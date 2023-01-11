@@ -2,10 +2,10 @@
 # to compress 3 RGB streams in parallel
 
 # Video parameters
-videoFolder: "G:/Videos/3cam/testalt3/"
+videoFolder: "G:/Videos/3cam/testalt3_60fps_180s_dual/" #100Mbps_2GPU_300M/"
 videoFilename: "2.mp4"
-frameRate: 72 #60
-recTimeInSec: 300 #1800 #600
+frameRate: 60 #72 #60
+recTimeInSec: 180 #300 #1800 #600
 
 # Camera parameters
 numCams: 3
@@ -28,21 +28,25 @@ cameraGain: 10.1
 disableGamma: False #True
 cameraDebug: True
 ADCBits: "12"
-printWriteQueue: 500
+printWriteQueue: False #500
 packetDelay: 500
 MaxIncompleteImages: 200
 
 # Compression parameters
-gpuID: [0, 0, 0]                              
+gpuID: [1, 1, 1]                              
 gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
 codec: "h264"                         # "h264", "h265", or user-defined video codec
 quality: 21                           # 0-55
-ffmpegLogLevel: "warning"               # "quiet", "warning", "info"
+rateControl: "1"                      #"0"
+maxBitRate: "950000000"
+avgBitRate: "100000000"
+gpuBuffer: "300M"
+ffmpegLogLevel: "info"               # "quiet", "warning", "info"
 # ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
 
 # Display parameters
 chunkLengthInSec: 5 #30
-displayFrameRate: 5 #10
+displayFrameRate: -5 #10
 displayDownsample: 4
 
 # Trigger Parameters

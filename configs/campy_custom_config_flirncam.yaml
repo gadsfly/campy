@@ -2,21 +2,21 @@
 # to compress 3 RGB streams in parallel
 
 # Video parameters
-videoFolder: "G:/videos/ncam/test6_240s_40fps/"
+videoFolder: "G:/videos/ncam/test3_2688_1536_50fps_2GPU_128Mgpubuf_300Mbps_dual/"
 videoFilename: "0.mp4"
-frameRate: 40
-recTimeInSec: 240
+frameRate: 60
+recTimeInSec: 12
 
 # Camera parameters
-numCams: 6
-cameraSelection: [1,2,3,4,5,6]
-cameraNames: ["Camera1","Camera2","Camera3", "Camera4","Camera5","Camera6"]
+numCams: 1
+cameraSelection: [1] #,2,3] #,5,6]
+cameraNames: ["Camera4"] #, "Camera5","Camera6"] #["Camera1","Camera2","Camera3", "Camera4", "Camera5","Camera6"]
 cameraMake: "flir"
 cameraSettings: "./configs/rgb24.pfs"
 pixelFormatInput: "bayer_bggr8" #"rgb24"
-pixelFormatOutput: "rgb0"
-frameWidth:  2816 #2688 #1152 #3168 #2304 #1280
-frameHeight: 1664 #1536 #1024 #2176 #2048 #1024
+pixelFormatOutput: "rgb0"  #"bgr0" #"yuv420p" #"bgr8" #"rgb0" #"rgb444le" #"nv21" #
+frameWidth:  1152 #[1152,3072,2944] #3072 #3072 #2944 #2944 #2816 #2816 #2816 #2688 #1152 #3168 #2304 #1280
+frameHeight: 1024 #1920 #1792 #1792 #1664 #1664 #1536 #1664 #1536 #1024 #2176 #2048 #1024
 offsetX: 128 #400
 offsetY: 368 #100
 
@@ -28,15 +28,19 @@ cameraGain: 10.4
 disableGamma: False #True
 cameraDebug: False #True
 ADCBits: "8"
-printWriteQueue: 500
-packetDelay: 500
-MaxIncompleteImages: 200
+printWriteQueue: False #True #500
+packetDelay: 1000
+MaxIncompleteImages: 200 #1000
 
 # Compression parameters
-gpuID: [0,0,0,0,0,0]                              
+gpuID: 0 #[0,0,0] #,0,0] #[0,0,0,1,1,1]  #[1,1,1,1,1,1] #[0,0,0,0,0,0] #[0,0,0,1,1,1]                              
 gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
 codec: "h264"                         # "h264", "h265", or user-defined video codec
 quality: 21                           # 0-55
+rateControl: "1"                      #"0"
+maxBitRate: "950000000" #"600000000"
+avgBitRate: "300000000" #"300000000"
+gpuBuffer: "128M" #"256M"
 ffmpegLogLevel: "info"               # "quiet", "warning", "info"
 # ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
 
