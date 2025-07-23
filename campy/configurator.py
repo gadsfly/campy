@@ -7,95 +7,114 @@ from campy.cameras import unicam
 
 
 def DefaultParams():
-	"""
-	Default parameters for campy config.
-	Omitted parameters will revert to these default values.
-	""" 
+    """
+    Default parameters for campy config.
+    Omitted parameters will revert to these default values.
+    """ 
 
-	params = {}
-	# Recording default parameters
-	params["numCams"] = 1
-	params["videoFolder"] = "./test"
-	params["videoFilename"] = "0.mp4"
-	params["frameRate"] = 100
-	params["recTimeInSec"] = 10
+    params = {}
+    # Recording default parameters
+    params["numCams"] = 1
+    params["videoFolder"] = "./test"
+    params["videoFilename"] = "0.mp4"
+    params["frameRate"] = 100
+    params["recTimeInSec"] = 10
 
-	# Camera default parameters
-	params["cameraMake"] = "basler"
-	params["cameraSettings"] = "None"
-	params["frameWidth"] = 1152
-	params["frameHeight"] = 1024
-	params["cameraDebug"] = False
+    # Camera default parameters
+    params["cameraMake"] = "basler"
+    params["cameraSettings"] = "./campy/cameras/basler/rgb24.pfs"
+    params["frameWidth"] = 1152
+    params["frameHeight"] = 1024
+    params["cameraDebug"] = False
+    params["printWriteQueue"] = False
+    # Offsets for FLIR/Spinnaker cameras
+    params["offsetX"] = None
+    params["offsetY"] = None
 
-	# Flir camera default parameters
-	params["cameraTrigger"] = "None" # "Line3"
-	params["cameraOut"] = 2
-	params["bufferMode"] = "OldestFirst"
-	params["bufferSize"] = 100
-	params["cameraExposureTimeInUs"] = 1500
-	params["cameraGain"] = 1
-	params["disableGamma"] = True
+    # Flir camera default parameters
+    params["cameraTrigger"] = "None" # "Line3"
+    params["cameraOut"] = 2
+    params["bufferMode"] = "OldestFirst"
+    params["bufferSize"] = 100
+    params["cameraExposureTimeInUs"] = 1500
+    params["cameraGain"] = 1
+    params["disableGamma"] = True
 
-	# Compression default parameters
-	params["ffmpegLogLevel"] = "quiet"
-	params["ffmpegPath"] = "None" # "/home/usr/Documents/ffmpeg/ffmpeg"
-	params["pixelFormatInput"] = "rgb24" # "bayer_bggr8" "rgb24"
-	params["pixelFormatOutput"] = "rgb0"
-	params["gpuID"] = -1
-	params["gpuMake"] = "nvidia"
-	params["codec"] = "h264"  
-	params["quality"] = 21
-	params["preset"] = "None"
+    # Compression default parameters
+    params["ffmpegLogLevel"] = "quiet"
+    params["ffmpegPath"] = "None"           # "/home/usr/Documents/ffmpeg/ffmpeg"
+    params["pixelFormatInput"] = "rgb24"    # "bayer_bggr8" "rgb24"
+    params["ADCBits"] = "8"
+    params["pixelFormatOutput"] = "rgb0"
+    params["gpuID"] = -1
+    params["gpuMake"] = "nvidia"
+    params["codec"] = "h264"  
+    params["quality"] = 21                  # Only used when using constant bit rate 
+    params["preset"] = "None"
+    params["packetDelay"] = 3400
+    params["convertBuffer"] = False
+    params["maxBitRate"] = '900000000'      # Only when using variable bit rate
+    params["avgBitRate"] = '4000000'        # Only when using variable bit rate
+    params["rateControl"] = '0'             # 1 for vbr (variable bit rate), 32 for vbr_hq (vbr high quality mode); 2 for contant bitrate, 16 for constant bitrate high quality, 0 for constatnt qp mode
+    params["gpuBuffer"] = '64M'             # This buffer is important for stabalizing video write and read spead
 
-	# Display parameters
-	params["chunkLengthInSec"] = 5
-	params["displayFrameRate"] = 10
-	params["displayDownsample"] = 2
+    # Display parameters
+    params["chunkLengthInSec"] = 5
+    params["displayFrameRate"] = -10
+    params["displayDownsample"] = 2
 
-	# Trigger parameters
-	params["triggerController"] = "arduino"
-	params["startArduino"] = False
-	params["serialPort"] = "COM3"
-	params["digitalPins"] = [0,1,2,3,4,5,6]
+    # Trigger parameters
+    params["triggerController"] = "arduino"
+    params["startArduino"] = False
+    params["serialPort"] = "COM3"
+    params["digitalPins"] = [0,1,2,3,4,5,6]
 
-	return params
+    #Preemptive closing parameters
+    params["MaxIncompleteImages"] = False
+
+    return params
 
 
 def AutoParams(params, default_params):
-	# Handle out of range values (reset to default)
-	range_params = [
-		"numCams",
-		"frameRate",
-		"recTimeInSec",
-		"frameHeight",
-		"frameWidth",
-		"bufferSize",
-		"cameraGain",
-		"cameraExposureTimeInUs",
-		"quality",
-		"chunkLengthInSec",
-		"displayFrameRate",
-		"displayDownsample",
-		]
+    # Handle out of range values (reset to default)
+    range_params = [
+        "numCams",
+        "frameRate",
+        "recTimeInSec",
+        "frameHeight",
+        "frameWidth",
+        "bufferSize",
+        "cameraGain",
+        "cameraExposureTimeInUs",
+        "quality",
+        "chunkLengthInSec",
+        "displayFrameRate",
+        "displayDownsample",
+        ]
 
-	for i in range(len(range_params)):
-		key = range_params[i]
-		default_value = default_params[key]
-		if params[key] <= 0:
-			params[key] = default_value
-			print("{} set to invalid value in config. Setting to default ({})."\
-					.format(key, default_value))
+    for i in range(len(range_params)):
+        key = range_params[i]
+        default_value = default_params[key]
+        if isinstance(params[key], list):
+            if any(item<=0 for item in params[key]):
+                params[key] = [default_value]*len(params[key])
+                print("One or more of list elements in {} set to invalid value in config. Setting all list items to default ({})."\
+                        .format(key, default_value)) 
+        if not isinstance(params[key], list) and params[key] <= 0:
+            params[key] = default_value
+            print("{} set to invalid value in config. Setting to default ({})."\
+                    .format(key, default_value))
 
-	# Handle missing config parameters
-	if "numCams" in params.keys():
-		if "cameraNames" not in params.keys():
-			params["cameraNames"] = ["Camera%s" % n for n in range(params["numCams"])]
-		if "cameraSelection" not in params.keys():
-			params["cameraSelection"] = [n for n in range(params["numCams"])]
-	else:
-		print("Please configure 'numCams' to the number of cameras you want to acquire.")
+    # Handle missing config parameters
+    if "numCams" in params.keys():
+        if "cameraNames" not in params.keys():
+            params["cameraNames"] = ["Camera%s" % n for n in range(params["numCams"])]
+        if "cameraSelection" not in params.keys():
+            params["cameraSelection"] = [n for n in range(params["numCams"])]
+    else:
+        print("Please configure 'numCams' to the number of cameras you want to acquire.")
 
-	return params
+    return params
 
 
 def ConfigureParams():
@@ -112,22 +131,41 @@ def ConfigureParams():
 
 
 def ConfigureCamParams(systems, params, n_cam):
-	# Insert camera-specific metadata from parameters into cam_params dictionary
-	cam_params = params
-	cam_params["n_cam"] = n_cam
-	cam_params["baseFolder"] = os.getcwd()
-	cam_params["cameraName"] = params["cameraNames"][n_cam]
+    # Insert camera-specific metadata from parameters into cam_params dictionary
+    cam_params = params
+    cam_params["n_cam"] = n_cam
+    cam_params["baseFolder"] = os.getcwd()
+    cam_params["cameraName"] = params["cameraNames"][n_cam]
 
-	cam_params = OptParams(cam_params)
-	cam_make = cam_params["cameraMake"]
-	cam_idx = cam_params["cameraSelection"]
+    if isinstance(params["frameWidth"], list):
+        cam_params["frameWidth"] = params["frameWidth"][n_cam]
+    if isinstance(params["frameHeight"], list):
+        cam_params["frameHeight"] = params["frameHeight"][n_cam]
+    if isinstance(params["cameraExposureTimeInUs"], list):
+        cam_params["cameraExposureTimeInUs"] = params["cameraExposureTimeInUs"][n_cam]
+    if isinstance(params["cameraGain"], list):
+        cam_params["cameraGain"] = params["cameraGain"][n_cam]
+    if isinstance(params["offsetX"], list):
+        cam_params["offsetX"] = params["offsetX"][n_cam]
+    if isinstance(params["offsetY"], list):
+        cam_params["offsetY"] = params["offsetY"][n_cam]
+    if isinstance(params["avgBitRate"], list):
+        cam_params["avgBitRate"] = params["avgBitRate"][n_cam]
+    if isinstance(params["maxBitRate"], list):
+        cam_params["maxBitRate"] = params["maxBitRate"][n_cam]
+    if isinstance(params["gpuBuffer"], list):
+        cam_params["gpuBuffer"] = params["gpuBuffer"][n_cam]
 
-	cam_params["device"] = systems[cam_make]["deviceList"][cam_idx]
-	cam_params = unicam.LoadDevice(systems, params, cam_params)
+    cam_params = OptParams(cam_params)
+    cam_make = cam_params["cameraMake"]
+    cam_idx = cam_params["cameraSelection"]
 
-	cam_params["cameraSerialNo"] = systems[cam_make]["serials"][cam_idx]
+    cam_params["device"] = systems[cam_make]["deviceList"][cam_idx]
+    cam_params = unicam.LoadDevice(systems, params, cam_params)
 
-	return cam_params
+    cam_params["cameraSerialNo"] = systems[cam_make]["serials"][cam_idx]
+
+    return cam_params
 
 
 def OptParams(cam_params):
@@ -262,10 +300,28 @@ def ParseClargs(parser):
 		help="Frame width in pixels.",
 	)
 	parser.add_argument(
+		"--offsetX", 
+		dest="offsetX",
+		type=int, 
+		help="Width offset in pixels. Must be divisible by 4",
+	)
+	parser.add_argument(
+		"--offsetY", 
+		dest="offsetY",
+		type=int, 
+		help="Height offset in pixels. Must be divisible by 4",
+	)
+	parser.add_argument(
 		"--cameraDebug", 
 		dest="cameraDebug",
 		type=bool, 
 		help="Flag to turn on camera debug mode.",
+	)
+	parser.add_argument(
+		"--printWriteQueue", 
+		dest="printWriteQueue",
+		type=bool, 
+		help="Flag to turn on printing the size of  Write Queue.",
 	)
 	parser.add_argument(
 		"--cameraTrigger", 
@@ -334,6 +390,24 @@ def ParseClargs(parser):
 		dest="pixelFormatOutput",
 		type=ast.literal_eval,
 		help="Pixel format output. Use 'rgb0' for best results.",
+	)
+	parser.add_argument(
+		"--ADCBits",
+		dest="ADCBits",
+		type=ast.literal_eval,
+		help="Bit depth for camera ADC - 8,10,12,14 .",
+	)
+	parser.add_argument(
+		"--packetDelay",
+		dest="packetDelay",
+		type=ast.literal_eval,
+		help="Set the Gev Stream Control Packet Delay (GevSCPD). Lower delay => higer bandwidth. Default is 3400. Check the Getting Started Guide for more details",
+	)
+	parser.add_argument(
+		"--convertBuffer",
+		dest="convertBuffer",
+		type=ast.literal_eval,
+		help="Set the filter to be used for converting image buffer from one format to another. Default: False. Currently only support HQ_LINEAR",
 	)
 	parser.add_argument(
 		"--gpuID",
@@ -413,6 +487,39 @@ def ParseClargs(parser):
 		dest="digitalPins",
 		type=int,
 		help="Digital pins on microcontroller board for sending TTL camera triggers.",
+	)
+ 
+	parser.add_argument(
+		"--MaxIncompleteImages",
+		dest="MaxIncompleteImages",
+		type=int,
+		help="Automatically shut down recording if number of dropped frames reach this number. Set to -1 to diable. Only applicable for FLIR cameras",
+	)
+	parser.add_argument(
+		"--maxBitRate",
+		dest="maxBitRate",
+		type=ast.literal_eval,
+		help="Maximum encoding bitrate for FFMPEG. Default is 900Mbps - 1Gbps is not allowed. Have to be specified in bits per second",
+	)
+
+	parser.add_argument(
+		"--avgBitRate",
+		dest="avgBitRate",
+		type=ast.literal_eval,
+		help="Average encoding bitrate for FFMPEG. This controls how big the output file wiil be. Default is 4Mbps. Have to be specified in bits per second",
+	)
+
+	parser.add_argument(
+		"--rateControl",
+		dest="rateControl",
+		type=ast.literal_eval,
+		help="Specifies the type of rate control performed - constant bitrate, variable bitrate or constant qp. Please use the command 'ffmpeg -h encoder=nvenc_h264' to check all available bitrate modes. Default '0'.",
+	)
+	parser.add_argument(
+		"--gpuBuffer",
+		dest="gpuBuffer",
+		type=ast.literal_eval,
+		help="GPU Buffer. Available in variable bitrate mode",
 	)
 
 	return parser.parse_args()

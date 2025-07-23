@@ -8,6 +8,7 @@ import numpy as np
 from collections import deque
 from scipy import io as sio
 
+INCOMPLETE_IMAGE_COUNT=0
 
 def ImportCam(make):
 	if make == "basler":
@@ -117,63 +118,96 @@ def StartGrabbing(camera, cam_params, cam):
 def CountFPS(grabdata, frameNumber, timeStamp):
 	if frameNumber % grabdata["chunkLengthInFrames"] == 0:
 		timeElapsed = timeStamp - grabdata["timeStamp"][0]
-		fpsCount = round((frameNumber - 1) / timeElapsed, 1)
+		fpsCount = round(frameNumber / timeElapsed, 1)
 		print('{} collected {} frames at {} fps for {} sec.'\
 			.format(grabdata["cameraName"], frameNumber, fpsCount, round(timeElapsed)))
 
+def recordIncompleteImage(camera_name):
+  global INCOMPLETE_IMAGE_COUNT
+  INCOMPLETE_IMAGE_COUNT = INCOMPLETE_IMAGE_COUNT + 1
+#   if camera_name in INCOMPLETE_IMAGE_COUNT.keys():
+#       INCOMPLETE_IMAGE_COUNT[camera_name] = INCOMPLETE_IMAGE_COUNT[camera_name] + 1
+#   else:
+#       INCOMPLETE_IMAGE_COUNT[camera_name] = 1
+#   print("Incomplete Image Count = ", INCOMPLETE_IMAGE_COUNT)
+
+def handleIncompleteImages(cam_params, stopReadQueue):
+    if cam_params["MaxIncompleteImages"]>0 and INCOMPLETE_IMAGE_COUNT > cam_params["MaxIncompleteImages"]:
+        stopReadQueue.append("STOP")
+        
+#   if cam_params["MaxIncompleteImages"]>0 and INCOMPLETE_IMAGE_COUNT[cam_params["cameraName"]] > cam_params["MaxIncompleteImages"]:
+#     stopReadQueue.append("STOP")
+    
+        if cam_params["cameraDebug"]:
+            print("Preemptively stopping recording for camera {} since there are too many dropped images. Incomplete Images Count {}".format(cam_params["cameraName"], INCOMPLETE_IMAGE_COUNT))
+            print("You can set the parameter MaxIncompleteImages to -1 in config to turn this off.")
+  
+    return stopReadQueue
 
 def GrabFrames(cam_params, writeQueue, dispQueue, stopReadQueue, stopWriteQueue):
-	# Open the camera object
-	cam, camera, cam_params = OpenCamera(cam_params, stopWriteQueue)
+    # Open the camera object
+    cam, camera, cam_params = OpenCamera(cam_params, stopWriteQueue)
 
-	# Use Basler's default display window on Windows. Not supported on Linux
-	if sys.platform=='win32' and cam_params["cameraMake"] == 'basler':
-		dispQueue = cam.OpenPylonImageWindow(cam_params)
+    # Use Basler's default display window on Windows. Not supported on Linux
+    if sys.platform=='win32' and cam_params["cameraMake"] == 'basler':
+        dispQueue = cam.OpenPylonImageWindow(cam_params)
 
-	# Create dictionary for appending frame number and timestamp information
-	grabdata = GrabData(cam_params)
+    # Create dictionary for appending frame number and timestamp information
+    grabdata = GrabData(cam_params)
 
-	# Start grabbing frames from the camera
-	grabbing = StartGrabbing(camera, cam_params, cam)
+    # Start grabbing frames from the camera
+    grabbing = StartGrabbing(camera, cam_params, cam)
 
-	frameNumber = 0
-	while(not stopReadQueue):
-		try:
-			# Grab image from camera buffer if available
-			grabResult = cam.GrabFrame(camera, frameNumber)
+    frameNumber = 0
+    while(not stopReadQueue):
+        try:
+            # Grab image from camera buffer if available
+            if cam_params["cameraMake"] == "flir":
+                grabResultFLIR = cam.GrabFrame(camera, frameNumber, cam_params["cameraName"])
+                # print("Here")
+                stopReadQueue = handleIncompleteImages(cam_params, stopReadQueue)
+                if cam_params["convertBuffer"]:
+                    grabResult = cam.ConvertBuffer(grabResultFLIR) 
+                grabResult = grabResultFLIR
+            else:
+                grabResult = cam.GrabFrame(camera, frameNumber)
 
-			# Append numpy array to writeQueue for writer to append to file
-			img = cam.GetImageArray(grabResult)
-			writeQueue.append(img)
+            # print("Here2")
+            # Append numpy array to writeQueue for writer to append to file
+            # img = grabResult
+            img = cam.GetImageArray(grabResult)
+            # print(img.shape)
+            writeQueue.append(img)
 
-			# Append timeStamp and frameNumber to grabdata
-			frameNumber += 1
-			grabdata['frameNumber'].append(frameNumber) # first frame = 1
-			timeStamp = cam.GetTimeStamp(grabResult)
-			grabdata['timeStamp'].append(timeStamp)
+            # print("Here3")
+            # Append timeStamp and frameNumber to grabdata
+            frameNumber += 1
+            grabdata['frameNumber'].append(frameNumber) # first frame = 1
+            timeStamp = cam.GetTimeStamp(grabResult)
+            grabdata['timeStamp'].append(timeStamp)
 
-			# Display converted, downsampled image in the Window
-			if frameNumber % grabdata["frameRatio"] == 0:
-				img = cam.DisplayImage(cam_params, dispQueue, grabResult)
+            # Display converted, downsampled image in the Window
+            if frameNumber % grabdata["frameRatio"] == 0 and cam_params["displayFrameRate"] > 0:
+                img = cam.DisplayImage(cam_params, dispQueue, grabResult)
 
-			CountFPS(grabdata, frameNumber, timeStamp)
+            CountFPS(grabdata, frameNumber, timeStamp)
 
-			cam.ReleaseFrame(grabResult)
+            cam.ReleaseFrame(grabResult)
 
-			if frameNumber >= grabdata["numImagesToGrab"]:
-				break
+            if frameNumber >= grabdata["numImagesToGrab"]:
+                break
 
-		except Exception as e:
-			if cam_params["cameraDebug"]:
-				logging.error('Caught exception at cameras/unicam.py GrabFrames: {}'.format(e))
-			time.sleep(0.001)
+        except Exception as e:
+            if cam_params["cameraDebug"]:
+                logging.error('Caught exception at cameras/unicam.py GrabFrames: {}'.format(e))
+            time.sleep(0.001)
 
-	# Close the camaera, save metadata, and tell writer and display to close
-	cam.CloseCamera(cam_params, camera)
-	SaveMetadata(cam_params, grabdata)
-	if not sys.platform=='win32' or not cam_params['cameraMake'] == 'basler':
-		dispQueue.append('STOP')
-	stopWriteQueue.append('STOP')
+    # Close the camaera, save metadata, and tell writer and display to close
+    cam.CloseCamera(cam_params, camera)
+    SaveMetadata(cam_params, grabdata)
+    if not sys.platform=='win32' or not cam_params['cameraMake'] == 'basler':
+        dispQueue.append('STOP')
+    stopWriteQueue.append('STOP')
 
 
 def SaveMetadata(cam_params, grabdata):

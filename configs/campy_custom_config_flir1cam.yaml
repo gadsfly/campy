@@ -1,0 +1,54 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+videoFolder: "G:/videos/1cam_3/timetest2/"
+videoFilename: "otfdb11.mp4"
+frameRate: 80 #200
+recTimeInSec:  120 #1800 #3600 #1800 #7200
+
+# Camera parameters
+numCams: 1
+cameraSelection: [3]
+cameraNames: ["Camera3"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: 'bayer_bggr8' #"bayer_bggr8" #"bayer_bggr8" #"rgb24" #'rgb8packed' #'bayer_10_packed' #'yuv_411' #'yuv_422' #'ycbcr422_8'
+pixelFormatOutput: "rgb0"
+frameWidth:  2688 #2688 #1024 #1152 #3200 #3072 #3184 #2992 #2896 #2800 #2512 #2416 #2304 #2192 #2080 #1968 #1856 #1808 #1728 #1712 #1632 #1152 #1648 #1152  not workig -----> #2088 #3168  #3152 2448
+frameHeight: 1536 #1536 #0896 #1024 #2176 #2048 #2160 #2160 #2160 #2160 #2160 #2080 #1968 #1856 #1808 #1728 #1712 #1632 #1520 #1520 #1456 #1024 #1456 #1024 not working -----> #1456 #2176 
+offsetX: 128 #128
+offsetY: 368 #368
+
+
+# Flir settings
+# cameraTrigger: "None" # "Line3" #
+bufferSize: 1000 #100 #1000 #271 - From Auto setting
+cameraExposureTimeInUs: 3582
+cameraGain: 10.4
+disableGamma: False
+cameraDebug: True
+# ADCBits: "10"
+# printWriteQueue: 50
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# Compression parameters
+gpuID: 0                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+quality: 21                           # 0-55
+ffmpegLogLevel: "info"               # "quiet", "warning", "info"
+preset: "ll" 
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: 1
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"

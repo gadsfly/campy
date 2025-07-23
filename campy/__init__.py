@@ -17,6 +17,8 @@ def CampyParams():
 	params["cameraSettings"] = "./settings/acA1920-150uc_1152x1024p_100fps_trigger_RGB_p6.pfs"
 	params["frameWidth"] = 1152
 	params["frameHeight"] = 1024
+	params["offsetX"] = None
+	params["offsetY"] = None
 
 	# Flir camera default parameters
 	params["bufferMode"] = "OldestFirst"
@@ -24,11 +26,12 @@ def CampyParams():
 	params["bufferSize"] = 100
 	params["cameraGain"] = 1
 	params["disableGamma"] = True
-	params["cameraTrigger"] = "Line3"
+	params["cameraTrigger"] = "Line3" # "Line0", "Line1", "Line2", "Line3" -  Acceptable Lines
 
 	# Compression default parameters
 	params["gpuID"] = [0,0,0]
-	params["pixelFormatInput"] = "rgb24" # "bayer_bggr8" "rgb24"
+	params["pixelFormatInput"] = "rgb24" # "bayer_bggr8" "rgb24
+	params["ADCBits"] = "8"
 	params["pixelFormatOutput"] = "rgb0"
 	params["codec"] = "h264"  
 	params["quality"] = "21"

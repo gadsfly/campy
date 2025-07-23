@@ -1,0 +1,51 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+videoFolder: "G:/videos/2cam_3/timetest/"
+videoFilename: "unthreaded.mp4"
+frameRate: 40 # make the camera record at this frame rate in flir.py (check how gamma is enabled)
+recTimeInSec:  120 #1800 #3600 #1800 #7200
+
+# Camera parameters
+numCams: 2
+cameraSelection: [1,2]
+cameraNames: ["Camera1","Camera2"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: 'bayer_bggr8' #"bayer_bggr8" #"rgb24" #'rgb8packed' #
+pixelFormatOutput: "rgb0"
+frameWidth:  2688 #2560 #2432 #2304 #2176 #2048 #1920 #1792 #1664 #2176 #2944 #1536 #3200 #3072 #3184 #2992 #2896 #2800 #2512 #2416 #2304 #2192 #2080 #1968 #1856 #1808 #1728 #1712 #1632 #1152 #1648 #1152  not workig -----> #2088 #3168  #3152 2448
+frameHeight: 1536 #2176 #2176 #2048 #1920 #1792 #1792 #1664 #1536 #1792 #2048 #1408 #2176 #2048 #2160 #2160 #2160 #2160 #2160 #2080 #1968 #1856 #1808 #1728 #1712 #1632 #1520 #1520 #1456 #1024 #1456 #1024 not working -----> #1456 #2176 
+offsetX: 8
+offsetY: 0
+
+
+# Flir settings
+# cameraTrigger: "None" # "Line3" #
+bufferSize: 1800 #100 #1000 #271 - From Auto setting
+cameraExposureTimeInUs: 3582
+cameraGain: 18
+disableGamma: False # Add controller for gamma value
+cameraDebug: False
+# ADCBits: "8"
+# printWriteQueue: True
+
+# Compression parameters
+gpuID: [0,0]                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+quality: 21                           # 0-55
+ffmpegLogLevel: "warning"               # "quiet", "warning", "info"
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: 10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"

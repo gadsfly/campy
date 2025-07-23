@@ -44,31 +44,52 @@ def CloseSystems(systems, params):
 
 
 def AcquireOneCamera(n_cam):
-	# Initialize param dictionary for this camera stream
-	cam_params = configurator.ConfigureCamParams(systems, params, n_cam)
+    # Initialize param dictionary for this camera stream
+    cam_params = configurator.ConfigureCamParams(systems, params, n_cam)
 
-	# Initialize queues for display, video writer, and stop messages
-	dispQueue = deque([], 2)
-	writeQueue = deque()
-	stopReadQueue = deque([],1)
-	stopWriteQueue = deque([],1)
+    # Initialize queues for display, video writer, and stop messages
+    dispQueue = deque([], 2)
+    writeQueue = deque()
+    stopReadQueue = deque([],1)
+    stopWriteQueue = deque([],1)
 
-	# Start image window display thread
-	threading.Thread(
-		target = display.DisplayFrames,
-		daemon = True,
-		args = (cam_params, dispQueue,),
-		).start()
+    # Start image window display thread
+    if cam_params["displayFrameRate"] > 0:
+        threading.Thread(
+            target = display.DisplayFrames,
+            daemon = True,
+            args = (cam_params, dispQueue,),
+            ).start()
 
-	# Start grabbing frames ("producer" thread)
-	threading.Thread(
-		target = unicam.GrabFrames,
-		daemon = True,
-		args = (cam_params, writeQueue, dispQueue, stopReadQueue, stopWriteQueue,),
-		).start()
+    # Start grabbing frames ("producer" thread)
+    threading.Thread(
+        target = unicam.GrabFrames,
+        daemon = True,
+        args = (cam_params, writeQueue, dispQueue, stopReadQueue, stopWriteQueue,),
+        ).start()
 
-	# Start video file writer (main "consumer" process)
-	writer.WriteFrames(cam_params, writeQueue, stopReadQueue, stopWriteQueue)
+    # Start multiple video file writer threads ("consumer" processes)
+    # *********************** DOES NOT WORK  ************************
+    # **** -> Getting
+    # threading.Thread(
+    # 	target = writer.AuxWriteFrames,
+    # 	daemon = True,
+    # 	args = (cam_params, writeQueue, stopReadQueue, stopWriteQueue,),
+    # ).start()
+
+    # threading.Thread(
+    # 	target = writer.AuxWriteFrames,
+    # 	daemon = True,
+    # 	args = (cam_params, writeQueue, stopReadQueue, stopWriteQueue,),
+    # ).start()
+    
+    # Main thread writer
+    # writer.AuxWriteFramesMainThread(cam_params, writeQueue, stopReadQueue, stopWriteQueue)
+
+    # Start video file writer (main "consumer" process)
+    # if len(writeQueue) > 0:
+    # 	writeQueue.popleft()
+    writer.WriteFrames(cam_params, writeQueue, stopReadQueue, stopWriteQueue)
 
 
 def Main():

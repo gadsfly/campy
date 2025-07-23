@@ -1,0 +1,58 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+videoFolder: "G:\\Videos\\6cam\\Mice_max2\\0111\\calib1"
+videoFilename: "0.mp4"
+frameRate: 24 #30 #36 #28 #30 #40 #50 #46 #40
+recTimeInSec:  600 #60 #120 
+
+# Camera parameters
+numCams: 6
+cameraSelection: [1,2,3,4,5,6]
+cameraNames: ["Camera1","Camera2","Camera3", "Camera4","Camera5","Camera6"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: "bayer_bggr8" #"bayer_bggr8" #"rgb24" 
+pixelFormatOutput: "rgb0" #"bayer_bggr8" #"bgr0" #"rgb0"
+frameWidth:  2304 #2944 #[2944, 2304, 2176, 2304, 2560, 2688] #2688 #2560 #2304 #2048 #1792 #1536 #3072 #3200 #1536 #1152 #3184 #2304 #1280 #Max = 3208
+frameHeight: 1792 #1920 #[1664, 1920, 1792, 1792, 1664, 1536] #1536 #1792 #1792 #1536 #1280 #1024 #2048 #2176 #1408 #1024 #2160 #2048 #1024 #Max = 2200
+offsetX: [408, 640, 472, 312, 296, 512] #88 #[88, 440, 416, 384, 384, 176] #72 #400 #128
+offsetY: [376, 216, 216, 288, 144, 0] #160 #[256, 160, 0, 160, 312, 424] #64 #100 #368
+
+
+# Flir settings
+bufferSize: 500
+cameraExposureTimeInUs: [1980, 5001, 6394, 8133, 2549, 4864] #3582 #11638
+cameraGain: [2, 2, 2, 2, 0, 3.4] #10.4
+disableGamma: False #True
+cameraDebug: True
+ADCBits: "8"
+printWriteQueue: False #1000
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# Compression parameters
+gpuID: [0,0,0,0,0,0]                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+preset: "fast"                        # default is "fast"
+rateControl: "1"                      #"0"
+maxBitRate: "950000000"
+avgBitRate: "10000000" #"14000000"
+gpuBuffer: "300M"
+quality: 21 #5 #30  #21                      # 0-55
+ffmpegLogLevel: "warning" #"info"               # "quiet", "warning", "info"
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: 10 #-5 #10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"
+

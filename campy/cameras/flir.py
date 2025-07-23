@@ -20,6 +20,17 @@ class ImageNotCompleteException(Exception):
 		self.expression = expression
 		self.message = message
 
+class TriggerNotFoundException(Exception):
+	"""Exception raised for errors when trigger controller is specified but no triggermode is specified.
+	Attributes:
+		expression -- input expression in which the error occurred
+		message -- explanation of the error
+	"""
+
+	def __init__(self, expression, message):
+		self.expression = expression
+		self.message = message
+
 
 def LoadSystem(params):
 
@@ -55,6 +66,14 @@ def GetModelName(camera):
 
 	return device_model_name
 
+def SetDeviceUserID(camera, name):
+    # Set Camera Name
+	node_DeviceUserID = PySpin.CStringPtr(camera.GetTLDeviceNodeMap().GetNode("DeviceUserID"))
+	if PySpin.IsAvailable(node_DeviceUserID) and PySpin.IsWritable(node_DeviceUserID):
+		node_DeviceUserID.SetValue(name)
+	else:
+		print("DeviceUserID node is not writable")
+
 
 def OpenCamera(cam_params):
 
@@ -63,10 +82,6 @@ def OpenCamera(cam_params):
 
 	# Initialize camera object
 	camera.Init()
-
-	# Reset to factory default settings
-	# camera.UserSetSelector.SetValue(PySpin.UserSetSelector_Default)
-	# camera.UserSetLoad()
 
 	# Retrieve TL device nodemap
 	nodemap_tldevice = camera.GetTLDeviceNodeMap()
@@ -77,6 +92,8 @@ def OpenCamera(cam_params):
 
 	# Load camera settings
 	cam_params = LoadSettings(camera, cam_params)
+	
+	# SetDeviceUserID(camera, cam_params["cameraName"])
 
 	return camera, cam_params
 
@@ -109,17 +126,25 @@ def StartGrabbing(camera):
 		return False
 
 
-def GrabFrame(camera, frameNumber):
+def GrabFrame(camera, frameNumber, camera_name):
 	image_result = camera.GetNextImage()
 
 	#  Ensure image completion
 	if image_result.IsIncomplete():
 		image_status = image_result.GetImageStatus()
+		print("Error in Camera {} while trying to retrieve frame number {}".format(camera_name, frameNumber))
 		print("Image incomplete with image status %d ..." % image_status)
+		unicam.recordIncompleteImage(camera_name)
 		raise ImageNotCompleteException("Image not complete", image_status)
 
 	return image_result
 
+def ConvertBuffer(grabResult):
+    
+    # return grabResult.Convert(PySpin.PixelFormat_RGB8Packed)
+    # return grabResult.Convert(PySpin.PixelFormat_BayerRG8)
+    # return grabResult.Convert(PySpin.PixelFormat_RGB8, PySpin.DIRECTIONAL_FILTER)
+    return grabResult.Convert(PySpin.PixelFormat_RGB8, PySpin.HQ_LINEAR)
 
 def GetImageArray(grabResult):
 
@@ -199,43 +224,45 @@ def CloseSystem(system, device_list):
 
 # Flir-Specific Functions
 def ConfigureCustomImageSettings(camera, cam_params):
-	"""
-	Configures a number of settings on the camera including offsets X and Y, width,
-	height, and pixel format. These settings must be applied before BeginAcquisition()
-	is called; otherwise, they will be read only. Also, it is important to note that
-	settings are applied immediately. This means if you plan to reduce the width and
-	move the x offset accordingly, you need to apply such changes in the appropriate order.
-	:param nodemap: GenICam nodemap.
-	:type nodemap: INodeMap
-	:return: True if successful, False otherwise.
-	:rtype: bool
-	"""
+    """
+    Configures a number of settings on the camera including offsets X and Y, width,
+    height, and pixel format. These settings must be applied before BeginAcquisition()
+    is called; otherwise, they will be read only. Also, it is important to note that
+    settings are applied immediately. This means if you plan to reduce the width and
+    move the x offset accordingly, you need to apply such changes in the appropriate order.
+    :param nodemap: GenICam nodemap.
+    :type nodemap: INodeMap
+    :return: True if successful, False otherwise.
+    :rtype: bool
+    """
 
-	try:
-		if cam_params["cameraDebug"]:
-			print("\n*** CONFIGURING CUSTOM IMAGE SETTINGS *** \n")
+    try:
+        if cam_params["cameraDebug"]:
+            print("\n*** CONFIGURING CUSTOM IMAGE SETTINGS *** \n")
 
-		settingsConfig = True
+        settingsConfig = True
 
-		camera.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
-		camera.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
+        camera.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
+        camera.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
 
-		cam_params = ConfigureFrameWidth(camera, cam_params)
-		cam_params = ConfigureFrameHeight(camera, cam_params)
-		cam_params = ConfigurePixelFormat(camera, cam_params)
-		cam_params = ConfigureExposure(camera, cam_params)
-		cam_params = ConfigureGain(camera, cam_params)
-		cam_params = ConfigureGamma(camera, cam_params)
-		cam_params = ConfigureBuffer(camera, cam_params)
-		cam_params = ConfigureChunkData(camera, cam_params)
+        cam_params = ConfigureFrameWidth(camera, cam_params)
+        cam_params = ConfigureFrameHeight(camera, cam_params)
+        cam_params = ConfigurePixelFormat(camera, cam_params)
+        cam_params = ConfigurePacketDelay(camera, cam_params)
+        cam_params = ConfigureADCBits(camera, cam_params)
+        cam_params = ConfigureExposure(camera, cam_params)
+        cam_params = ConfigureGain(camera, cam_params)
+        cam_params = ConfigureGamma(camera, cam_params)
+        cam_params = ConfigureBuffer(camera, cam_params)
+        cam_params = ConfigureChunkData(camera, cam_params)
 
-	except Exception as e:
-		logging.error("Caught error at cameras/flir.py ConfigureCustomImageSettings: {}".format(e))
-		settingsConfig = False
+    except Exception as e:
+        logging.error("Caught error at cameras/flir.py ConfigureCustomImageSettings: {}".format(e))
+        settingsConfig = False
 
-	cam_params["settingsConfig"] = settingsConfig
+    cam_params["settingsConfig"] = settingsConfig
 
-	return cam_params
+    return cam_params
 
 
 def ConfigureBuffer(camera, cam_params):
@@ -279,7 +306,13 @@ def ConfigureBuffer(camera, cam_params):
 			return cam_params
 
 		# Display Buffer Info
-		buffer_count.SetValue(cam_params["bufferSize"])
+		max_buffer_size = buffer_count.GetMax()
+		print("Max Buffer Size = %d" % max_buffer_size)
+		if (cam_params["bufferSize"] < max_buffer_size):
+			buffer_count.SetValue(cam_params["bufferSize"])
+		else:
+			print("Specified Buffer count %d is more than the maximum. Setting to maximum" % cam_params["bufferSize"])
+			buffer_count.SetValue(max_buffer_size)
 		print("Buffer count now set to: %d" % buffer_count.GetValue())
 
 		if cam_params["bufferMode"] == "OldestFirst":
@@ -477,14 +510,20 @@ def ConfigureFrameHeight(camera, cam_params):
 
 		node_height = PySpin.CIntegerPtr(nodemap.GetNode("Height"))
 		if PySpin.IsAvailable(node_height) and PySpin.IsWritable(node_height):
+			
+			# Reset offsets to 0 before calculating the validity of height
+			node_offset_y = PySpin.CIntegerPtr(nodemap.GetNode("OffsetY"))
+			if PySpin.IsAvailable(node_offset_y) and PySpin.IsWritable(node_offset_y):
+				node_offset_y.SetValue(0)
+    
 			height_to_set = cam_params["frameHeight"]
 			node_height.SetValue(height_to_set)
-			offset_y = int((max_h-height_to_set)/2)
+			offset_y = int((max_h-height_to_set)/2) if cam_params["offsetY"] is None else cam_params["offsetY"]
 			if offset_y % 4 != 0:
 				while offset_y % 4 != 0:
 					offset_y += 1
 				print("offset_y is set to {}".format(offset_y))
-			node_offset_y = PySpin.CIntegerPtr(nodemap.GetNode("OffsetY"))
+			
 			if PySpin.IsAvailable(node_offset_y) and PySpin.IsWritable(node_offset_y):
 				node_offset_y.SetValue(offset_y)
 				cam_params["offsetY"] = offset_y
@@ -532,15 +571,21 @@ def ConfigureFrameWidth(camera, cam_params):
 		# there is no reason to check against the increment.
 		node_width = PySpin.CIntegerPtr(nodemap.GetNode("Width"))
 		if PySpin.IsAvailable(node_width) and PySpin.IsWritable(node_width):
+			
+			# Reset offsets to 0 before calculating the validity of width
+			node_offset_x = PySpin.CIntegerPtr(nodemap.GetNode("OffsetX"))
+			if PySpin.IsAvailable(node_offset_x) and PySpin.IsWritable(node_offset_x):
+				node_offset_x.SetValue(0)
+			
 			width_to_set = cam_params["frameWidth"]
 			node_width.SetValue(width_to_set)
 			print("Width set to {}...".format(node_width.GetValue()))
-			offset_x = int((max_w-width_to_set)/2)
+			offset_x = int((max_w-width_to_set)/2) if cam_params["offsetX"] is None else cam_params["offsetX"]
 			if offset_x % 4 != 0:
 				while offset_x % 4 != 0:
 					offset_x += 1
 				print("offset_x is set to {}".format(offset_x))
-			node_offset_x = PySpin.CIntegerPtr(nodemap.GetNode("OffsetX"))
+			
 			if PySpin.IsAvailable(node_offset_x) and PySpin.IsWritable(node_offset_x):
 				node_offset_x.SetValue(offset_x)
 				cam_params["offsetX"] = offset_x
@@ -553,7 +598,7 @@ def ConfigureFrameWidth(camera, cam_params):
 		logging.error("Caught exception at cameras/flir.py ConfigureFrameWidth: {}".format(e))
 
 	return cam_params
-
+    
 
 def ConfigureGain(camera, cam_params):
 	"""
@@ -646,36 +691,109 @@ def ConfigureGamma(camera, cam_params):
 
 
 def ConfigurePixelFormat(camera, cam_params):
-	"""
-	This function configures the camera pixel format.
-	:param cam: Camera to acquire images from.
-	:type cam: CameraPtr
-	:param pixelFormat: string 
-	:type gain: str
-	:return: True if successful, False otherwise.
-	:rtype: bool
-	"""
-	
-	try:
-		pixelFormat = cam_params["pixelFormatInput"]
+    """
+    This function configures the camera pixel format.
+    :param cam: Camera to acquire images from.
+    :type cam: CameraPtr
+    :param pixelFormat: string 
+    :type gain: str
+    :return: True if successful, False otherwise.
+    :rtype: bool
+    All pixel formats supported http://softwareservices.flir.com/Spinnaker/latest/group___camera_defs__h.html#gabd5af55aaa20bcb0644c46241c2cbad1
+    """
 
-		if cam_params["cameraDebug"]:
-			print("*** CONFIGURING PIXEL FORMAT ***\n")
+    try:
+        pixelFormat = cam_params["pixelFormatInput"]
 
-		if pixelFormat == "bayer_rggb8" or pixelFormat == "bayer_bggr8":
-			camera.PixelFormat.SetValue(PySpin.PixelFormat_BayerRG8)
-			camera.IspEnable.SetValue(False)
-		elif pixelFormat == "rgb24":
-			camera.PixelFormat.SetValue(PySpin.PixelFormat_RGB8Packed)
-		elif pixelFormat == "gray":
-			camera.PixelFormat.SetValue(PySpin.PixelFormat_Mono8)
-		else:
-			eval("camera.PixelFormat.SetValue(PySpin.PixelFormat_{}".format(pixelFormat))
+        if cam_params["cameraDebug"]:
+            print("*** CONFIGURING PIXEL FORMAT ***\n")
 
-	except Exception as e:
-		logging.error("Error setting pixel format to {}: {}".format(pixelFormat, e))
+        if pixelFormat == "bayer_rggb8" or pixelFormat == "bayer_bggr8":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_BayerRG8)
+            camera.IspEnable.SetValue(False)
+        elif pixelFormat == "rgb24":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_RGB8Packed)
+        elif pixelFormat == "gray":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_Mono8)
+        elif pixelFormat == "bayer_10_packed":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_BayerRG10Packed)
+        elif pixelFormat == "yuv_411":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_YUV411Packed)   
+        elif pixelFormat == "yuv_422":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_YUV422Packed)  
+        elif pixelFormat == "ycbcr422_8":
+            camera.PixelFormat.SetValue(PySpin.PixelFormat_YCbCr422_8)    
+        else:
+            eval("camera.PixelFormat.SetValue(PySpin.PixelFormat_{}".format(pixelFormat))
 
-	return cam_params
+    except Exception as e:
+        logging.error("Error setting pixel format to {}: {}".format(pixelFormat, e))
+
+    return cam_params
+
+def ConfigurePacketDelay(camera, cam_params):
+    try:
+
+        nodemap = camera.GetNodeMap()
+        packet_delay = cam_params["packetDelay"]
+
+        node_GevSCPD = PySpin.CIntegerPtr(nodemap.GetNode("GevSCPD"))
+        if PySpin.IsAvailable(node_GevSCPD) and PySpin.IsWritable(node_GevSCPD):
+            node_GevSCPD.SetValue(packet_delay)
+            print("Packet Delay set to {}...".format(node_GevSCPD.GetValue()))
+            
+        else:
+            print("Packet Delay not available...")
+
+    except Exception as e:
+        logging.error("Caught exception at cameras/flir.py ConfigurePacketDelay: {}".format(e))
+
+    return cam_params
+    
+
+def ConfigureADCBits(camera, cam_params):
+    try :
+        ADCBits = cam_params["ADCBits"]
+        
+        
+        if cam_params["cameraDebug"]:
+            print("*** CONFIGURING ADC BIT DEPTH ***\n")
+        
+        nodemap = camera.GetNodeMap()
+        node_ADCBitDepth = PySpin.CEnumerationPtr(nodemap.GetNode("AdcBitDepth"))
+        
+        # if not PySpin.IsAvailable(node_ADCBitDepth) or not PySpin.IsWritable(node_ADCBitDepth):
+        #   print("Unable to configure gain (enum retrieval). Aborting...")
+        #   return cam_params
+        
+        if camera.AdcBitDepth.GetAccessMode() != PySpin.RW:
+            print("Unable to configure ADC Bit Depth (enum retrieval). Aborting...")
+            return cam_params
+            
+        if ADCBits == "8":
+        #   node_bit_8 = node_ADCBitDepth.GetEntryByName(8)
+        #   if not PySpin.IsAvailable(node_bit_8):
+        #     print("Unable to configure adc bit (entry retrieval). Aborting...")
+        #     return cam_params
+        #   print("ADC Bit Enum Entry Node Information: ", type(node_bit_8), node_bit_8)
+        #   node_ADCBitDepth.SetIntValue(node_bit_8.GetValue())
+          camera.AdcBitDepth.SetIntValue(PySpin.AdcBitDepth_Bit8)
+        #   camera.AdcBitDepth.SetIntValue(8)
+        
+        elif ADCBits == "10":
+            camera.AdcBitDepth.SetValue(PySpin.AdcBitDepth_Bit10)
+        elif ADCBits == "12":
+            camera.AdcBitDepth.SetValue(PySpin.AdcBitDepth_Bit12)
+        else:
+            eval("camera.AdcBitDepth.SetValue(PySpin.AdcBitDepth_Bit{}".format(ADCBits))
+        
+        # if cam_params["cameraDebug"]:
+        # #   print("Setting ADC Bit Depth to {}".format(camera.AdcBitDepth.GetValue()))
+   
+    except Exception as e:
+        logging.error("Error setting ADC bit depth to {}: {}".format(ADCBits, e))
+        
+    return cam_params
 
 
 def ConfigureTrigger(camera, cam_params):
@@ -695,6 +813,9 @@ def ConfigureTrigger(camera, cam_params):
 				print("*** CONFIGURING TRIGGER ***")
 
 		cameraTrigger = cam_params["cameraTrigger"]
+  
+		nodemap = camera.GetNodeMap()
+		node_Acquisition_Frame_Rate_Enable_bool = PySpin.CBooleanPtr(nodemap.GetNode("AcquisitionFrameRateEnable"))
 
 		# Ensure trigger mode off
 		# The trigger must be disabled in order to configure whether the source
@@ -719,8 +840,14 @@ def ConfigureTrigger(camera, cam_params):
 			camera.TriggerSource.SetValue(PySpin.TriggerSource_Software)
 			print("Trigger source set to software...")
 		elif cameraTrigger == 'none' or cameraTrigger == 'None' or cameraTrigger == 'NONE':
+			if cam_params["triggerController"].lower() != 'None'.lower():
+				raise TriggerNotFoundException("Camera trigger not found for trigger controller: ", cam_params["triggerController"])
 			camera.TriggerMode.SetValue(PySpin.TriggerMode_Off)
 			print("Trigger source set to None...")
+			if PySpin.IsAvailable(node_Acquisition_Frame_Rate_Enable_bool) and PySpin.IsWritable(node_Acquisition_Frame_Rate_Enable_bool):
+				node_Acquisition_Frame_Rate_Enable_bool.SetValue(True)
+				camera.AcquisitionFrameRate.SetValue(cam_params["frameRate"] if cam_params["frameRate"] < camera.AcquisitionFrameRate.GetMax() else camera.AcquisitionFrameRate.GetMax())
+				print("Acquisition frame rate set to: {}".format(camera.AcquisitionFrameRate.GetValue()) )
 			return cam_params
 		else:
 			# eval("camera.TriggerSource.SetValue(PySpin.TriggerSource_%s)" % cameraTrigger)
@@ -731,6 +858,12 @@ def ConfigureTrigger(camera, cam_params):
 		# Once the appropriate trigger source has been set, turn trigger mode
 		# on in order to retrieve images using the trigger.
 		camera.TriggerMode.SetValue(PySpin.TriggerMode_On)
+		
+		# if PySpin.IsAvailable(node_Acquisition_Frame_Rate_Enable_bool) and PySpin.IsWritable(node_Acquisition_Frame_Rate_Enable_bool):
+		# 	node_Acquisition_Frame_Rate_Enable_bool.SetValue(True)
+		# 	camera.AcquisitionFrameRate.SetValue(cam_params["frameRate"])
+		# 	print("Acquisition frame rate set to: {}".format(camera.AcquisitionFrameRate.GetValue()) )
+		
 
 		# cam_params["triggerSource"] = camera.TriggerMode.GetValue()
 		cam_params["configTrig"] = True
