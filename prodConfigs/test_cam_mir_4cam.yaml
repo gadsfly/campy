@@ -1,0 +1,71 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+# videoFolder: "G:\\Videos\\6cam\\lq53\\2024_08_20\\test_chris_new_14_37\\extrinsics"
+# videoFolder: "G:\\Videos\\6cam\\lq53\\2024_10_24_testing\\cam_test1\\extrinsics" # H for new volumn
+videoFolder: "C:\\Videos\\2025_07_21\\60hz_test_600s_4cam_gig2\\videos"
+# videoFolder: "G:\\Videos\\6cam\\akg61\\2024_06_28\\calib_after_10\\extrinsics"
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_07_11\\calib_1612\\extrinsics"
+videoFilename: "0.mp4"
+frameRate: 60 #30 #36 #28 #30 #40 #50 #46 #40
+recTimeInSec: 60 #600 #900  #900 #60 #120 
+overwrite: True
+
+# Camera parameters
+numCams: 4 #6
+cameraSelection: [0,1,2, 3] # ,3,4,5 #[1,2,3,4,5,6] #
+cameraNames: ["Camera1","Camera2","Camera3", "Camera4"] #, "Camera4","Camera5","Camera6"
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: "bayer_bggr8" #"bayer_bggr8" #"rgb24" 
+pixelFormatOutput: "rgb0" #"bayer_bggr8" #"bgr0" #"rgb0"
+frameWidth: 2304 
+frameHeight: 1792 
+# offsetX: [0, 0, 0] #, 360, 456, 144
+# offsetY: [0, 0, 0]
+
+offsetX: [456, 456, 456,  360] #, 360, 456, 144
+offsetY: [204, 204, 204, 204] #, 204, 204, 172
+# offsetX: [456, 456, 456, 456, 456, 456] the 6th cam moved somehow, now new ones.
+# offsetY: [204, 204, 204, 204, 204, 204]
+# offsetX: [408, 640, 472, 312, 296, 512] #88 #[88, 440, 416, 384, 384, 176] #72 #400 #128
+# offsetY: [376, 216, 216, 288, 144, 0] #160 #[256, 160, 0, 160, 312, 424] #64 #100 #368
+
+
+# Flir settings
+bufferSize: 500
+# cameraExposureTimeInUs: [6400, 5400, 3000, 2700, 5400, 6400] #from Junyu 
+cameraExposureTimeInUs: [6400, 5400, 3000, 3000] # ,  7400, 6400 # works for Chris's pipeline
+cameraGain: [10, 10, 10, 10] # , 10, 10, 10 #10.4
+disableGamma: False #True
+cameraDebug: True
+ADCBits: "8"
+printWriteQueue: False #1000
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# Compression parameters
+gpuID: [0,0,0,0]         #,0,0,0                    
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+preset: "fast"                        # default is "fast"
+rateControl: "1"                      #"0"
+maxBitRate: "950000000"
+avgBitRate: "14000000" #"8000000" #
+gpuBuffer: "300M"
+quality: 21 #5 #30  #21                      # 0-55
+ffmpegLogLevel: "warning" #"info"               # "quiet", "warning", "info"
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: 10 #-5 #10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"
+

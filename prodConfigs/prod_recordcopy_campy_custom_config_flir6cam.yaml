@@ -1,0 +1,104 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_02_16\\test_resutil\\run1" 
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_02_16\\test_resutil\\run2"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       \\videos"
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_07_02\\test\\videos
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_07_11\\1691485BMCFS1547\\videos"
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_07_11\\1691485LMtst0953\\videos"
+# videoFolder: "G:\\Videos\\6cam\\lq53\\2024_10_08\\20240819V1r1_20_48\\videos" #disk H for new volumn 20240819V1r1 20240916v1r1_15_57
+# videoFolder: "G:\\Videos\\6cam\\lq53\\2024_10_09\\test_10_11\\videos" #disk H for new volumn 20240819V1r1 20240916v1r1_15_57
+# videoFolder: G:\\Videos\\6cam\\lq53\\2024_11_11_testing\\height_of_cylinder\\videos
+# alwayws start with a number
+# 20240919V1L5 20241002PMCr2
+#2social_mini_0605pmc_single_15_38
+#2social_mini_20240919V1L5_single_13_20
+#2social_mini_20240919V1L5_single_13_20
+#20240910V1r_
+#0cricket_all_dead_3_14_50
+# 20240910V1r_BO_11_35
+# 2social_mini_20241015pmcr2_single_AO_13_24
+# G:\\24oct_mir_autosync\\2024_12_11\\20240919v1l5r1mini_pfemale_social_test_15_35\\videos
+# pfemale_social_test 20240919v1l5r1mini_p20240717PMC_social_test_11_30 p20240717PMC_social_test_11_30
+# 20240919v1l5r2mini_p20240521b1697576_social_test_13_26
+# _p20241111
+# 20241212v1l1r2mini_p20241111_12_16
+# 20240919v1l5r1mini_p20240717PMC_social_14_31
+# trashmini_240916v1r1_miceleash_test_19_15
+# 20241001PMCRE2mini_15_35
+# 20241225PMCLRE2mini_11_57
+# 20250324PMCRE1mini_p
+
+# 20241002PMCLE1mini_p20241001RE2_14_10 20241224PMCLE1mini_p20240303PMC1_14_21
+# 20241224PMCLE1mini_p20240303PMC2_14_44
+# 20241212V1RE1L23Fmini_p20241212V1LE1L23F
+# G:\\25Apri_social\\2025_05_02\\1shank3KOM_boxedshank3KOF
+# G:\\25Apri_social\\2025_05_13\\1shank3WTM1045_boxedshank3WTF
+# G:\\25Apri_social\\2025_05_13\\1shank3KOM1034_boxedshank3KOF
+# G:\\25Apri_social\\2025_05_13\\1shank3KOM1035_boxedshank3KOF
+# G:\\25Apri_social\\2025_05_15\\1shank3KOF1029_boxedshank3KOM
+# G:\\25Apri_social\\2025_05_15\\1shank3KOF1033_boxedshank3KOM
+# G:\\25Apri_social\\2025_05_15\\1shank3WTF1047_boxedshank3WTM
+# G:\\24oct_mir_autosync
+# videoFolder: "G:\\24oct_mir_autosync\\2025_05_16\\20241216V1RE1Fmini_pM_\\videos"
+# videoFolder: "G:\\25Apri_social\\2025_05_19\\mir_table_test\\videos"
+# 20250407V1L23r1blkcap_emptycone_aftersocialcone
+# 25juneon
+# 25socialmini
+videoFolder: "G:\\25juneon\\2025_06_17\\20250505V1L23R1pink_econeafterscone\\videos"
+frameRate: 30
+recTimeInSec: 460 #910 #910 #910 #1800 #1200 #400 #900 
+# overwrite: True
+
+# Camera parameters
+numCams: 6
+cameraSelection: [0,1,2,3,4,5] #[0,1,2,3,4,5]
+cameraNames: ["Camera1","Camera2","Camera3", "Camera4","Camera5","Camera6"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: "bayer_bggr8" #"bayer_bggr8" #"rgb24" 
+
+pixelFormatOutput: "rgb0" #"bayer_bggr8" #"bgr0" #"rgb0"
+frameWidth:  2304 #2944 #[2944, 2304, 2176, 2304, 2560, 2688] #2688 #2560 #2304 #2048 #1792 #1536 #3072 #3200 #1536 #1152 #3184 #2304 #1280 #Max = 3208
+frameHeight: 1792 #1920 #[1664, 1920, 1792, 1792, 1664, 1536] #1536 #1792 #1792 #1536 #1280 #1024 #2048 #2176 #1408 #1024 #2160 #2048 #1024 #Max = 2200
+offsetX: [456, 456, 456, 360, 456, 144] # offsetX: [456, 456, 456, 456, 456, 456] the 6th cam moved somehow, now new ones.
+offsetY: [204, 204, 204, 204, 204, 172] # offsetY: [204, 204, 204, 204, 204, 204]
+# offsetX: [408, 640, 472, 312, 296, 512] #88 comment out by JN
+# offsetY: [376, 216, 216, 288, 144, 0] #160 
+
+# Flir settings
+bufferSize: 500
+cameraExposureTimeInUs: [4868,7002,1800,2050,5111,5169] # [4100,7000,2250,3300,6900,6900] # mir's now have more equal exposure #[6400, 5400, 3700, 3700, 5400, 6400] #[4400, 3400, 1800, 2300, 3400, 4400] #3582 #11638
+cameraGain: [6,7,7.1,6.5,7,5.6] #[4,5,4,3,5,5] #may want to try with [5,...] next time? [3,4,3,2,4,4] #mir's #[7, 7, 3, 3, 7, 7] # [6, 6, 3, 3, 9, 9] #10.4
+disableGamma: False #True
+cameraDebug: True
+ADCBits: "8"
+printWriteQueue: False #1000
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# Compression parameters
+gpuID: [0,0,0,0,0,0]                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+preset: "fast"                        # default is "fast"
+rateControl: "1"                      #"0"
+maxBitRate: "950000000"
+avgBitRate: "4000000"
+gpuBuffer: "300M"
+quality: 21 #5 #30  #21                      # 0-55
+ffmpegLogLevel: "info"               # "quiet", "warning", "info"
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: -5 #10 #-5 #10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"
+

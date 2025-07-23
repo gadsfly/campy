@@ -1,0 +1,61 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+# this is mir's test on raw video
+
+# Video parameters
+# videoFolder: "G:\\Videos\\6cam\\as1296\\2024_02_16\\test_resutil\\run1" 
+videoFolder: "G:\\Videos\\6cam\\lq53\\2024_06_12\\rawvid_mirstop_30s_light_3\\videos"
+videoFilename:  "0.mp4" #"27000.mp4" # "54000.mp4" # "0.mp4"
+frameRate: 30
+recTimeInSec: 30 #600 #150 #400 #900 
+
+# Camera parameters
+numCams: 6
+cameraSelection: [0,1,2,3,4,5] #[0,1,2,3,4,5]
+cameraNames: ["Camera1","Camera2","Camera3", "Camera4","Camera5","Camera6"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: "bayer_bggr8" #"bayer_bggr8" #"rgb24" 
+pixelFormatOutput: "bayer_bggr8" ###"rgb0" #"bayer_bggr8" #"bgr0" #"rgb0"
+frameWidth:  2304 #2944 #[2944, 2304, 2176, 2304, 2560, 2688] #2688 #2560 #2304 #2048 #1792 #1536 #3072 #3200 #1536 #1152 #3184 #2304 #1280 #Max = 3208
+frameHeight: 1792 #1920 #[1664, 1920, 1792, 1792, 1664, 1536] #1536 #1792 #1792 #1536 #1280 #1024 #2048 #2176 #1408 #1024 #2160 #2048 #1024 #Max = 2200
+offsetX: [456, 456, 456, 456, 456, 456]
+offsetY: [204, 204, 204, 204, 204, 204]
+# offsetX: [408, 640, 472, 312, 296, 512] #88 comment out by JN
+# offsetY: [376, 216, 216, 288, 144, 0] #160 
+
+# Flir settings
+bufferSize: 500
+cameraExposureTimeInUs: [6400, 5400, 3700, 3700, 5400, 6400] #[4400, 3400, 1800, 2300, 3400, 4400] #3582 #11638
+cameraGain:  [7, 7, 3, 3, 7, 7] # [6, 6, 3, 3, 9, 9] #10.4
+disableGamma: False #True
+cameraDebug: True
+ADCBits: "8"
+printWriteQueue: False #1000
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# # Compression parameters
+gpuID: [0,0,0,0,0,0]                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec "rawvideo" for raw
+# preset: "slow" #"fast"                        # used to be is "fast"
+# rateControl: "1"                      #"0"
+# # maxBitRate: "950000000"
+# # avgBitRate: "4000000"
+# gpuBuffer: "300M" #maybe too large
+# quality: 21 ###5 #30  #21                      # 0-55
+ffmpegLogLevel: "info"               # "quiet", "warning", "info"
+# # ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: -5 #10 #-5 #10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"
+

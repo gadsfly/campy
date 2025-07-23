@@ -1,0 +1,60 @@
+# This moderate-level config uses the GPU 
+# to compress 3 RGB streams in parallel
+
+# Video parameters
+videoFolder: "G:\\Videos\\6cam\\lq53\\2024_06_20_exposure_test\\calib_exposure_test_11\\videos"
+videoFilename: "0.mp4"
+frameRate: 1 #30 #36 #28 #30 #40 #50 #46 #40
+recTimeInSec: 5 #900 #60 #120 
+# Camera parameters
+numCams: 6
+cameraSelection: [0,1,2,3,4,5] #[1,2,3,4,5,6] #
+cameraNames: ["Camera1","Camera2","Camera3", "Camera4","Camera5","Camera6"]
+cameraMake: "flir"
+# cameraSettings: "./configs/rgb24.pfs"
+pixelFormatInput: "bayer_bggr8" #"bayer_bggr8" #"rgb24" 
+pixelFormatOutput: "rgb0" #"bayer_bggr8" #"bgr0" #"rgb0"
+frameWidth:  2304 
+frameHeight: 1792 
+offsetX: [456, 456, 456, 456, 456, 456]
+offsetY: [204, 204, 204, 204, 204, 204]
+# offsetX: [408, 640, 472, 312, 296, 512] #88 #[88, 440, 416, 384, 384, 176] #72 #400 #128
+# offsetY: [376, 216, 216, 288, 144, 0] #160 #[256, 160, 0, 160, 312, 424] #64 #100 #368
+
+
+# Flir settings
+bufferSize: 500
+# cameraExposureTimeInUs: [6400, 5400, 3000, 2700, 5400, 6400] #from Junyu 
+cameraExposureTimeInUs: [4868,7002,1800,2050,5111,5169] #[5100,7000,1750,2250,6900,7600] #[4868, 8132, 1981, 1981, 5003, 6396] #[4868, 8132, 2548, 1981, 5003, 6396] #[6400, 5400, 3000, 4000, 7400, 6400] # works for Chris's pipeline
+cameraGain: [6,7,7.1,6.5,7,5.6] #[5,5,5,5,5,5] #[3,4,3,2,4,4] #[3, 2, 0, 0, 2, 2] #[3, 2, 0, 2, 2, 2] [10, 10, 10, 10, 10, 10] #10.4
+disableGamma: False #True
+cameraDebug: True
+ADCBits: "8"
+printWriteQueue: False #1000
+packetDelay: 500
+MaxIncompleteImages: 200
+
+# Compression parameters
+gpuID: [0,0,0,0,0,0]                              
+gpuMake: "nvidia"                     # "nvidia", "amd", "intel"                  
+codec: "h264"                         # "h264", "h265", or user-defined video codec
+preset: "fast"                        # default is "fast"
+rateControl: "1"                      #"0"
+maxBitRate: "950000000"
+avgBitRate: "14000000" #"8000000" #
+gpuBuffer: "300M"
+quality: 21 #5 #30  #21                      # 0-55
+ffmpegLogLevel: "warning" #"info"               # "quiet", "warning", "info"
+# ffmpegPath: "/usr/bin/ffmpeg"       # Location of ffmpeg binary if not using Anaconda
+
+# Display parameters
+chunkLengthInSec: 5 #30
+displayFrameRate: 10 #-5 #10
+
+# Trigger Parameters
+triggerController: 'arduino' #"None" #
+startArduino: True
+serialPort: "COM3"                    # e.g. "COM3" Win; "/dev/ttyACM0" Linux
+digitalPins: [9]
+cameraTrigger: "Line2"
+
